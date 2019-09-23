@@ -1,0 +1,208 @@
+---
+title: "Data 607 Project 2"
+author: "Ajay Arora"
+date: "September 18, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#1. Import libraries
+```{r}
+library(stringr)
+library(tidyr)
+library(dplyr)
+library('scales')
+library(ggplot2)
+library(kableExtra)
+
+```
+
+## R Markdown
+
+## First dataset summary:
+
+Summary of the Survey Data
+
+We are studying the species repartition and weight of animals caught in plots in our study area. The dataset is stored as a comma separated value (CSV) file. Each row holds information for a single animal, and the columns represent:  
+
+The data was downloaded from the following site: https://ndownloader.figshare.com/files/2292169
+
+References: https://r4ds.had.co.nz/tidy-data.html
+
+            https://www.google.com/search?q=R+gather()+expalined&ie=&oe=
+
+            https://datacarpentry.org
+            
+            https://uoftcoders.github.io/rcourse/lec04-dplyr.html            
+
+Column 	Description
+
+record_id 	Unique id for the observation
+
+month 	month of observation
+
+day 	day of observation
+
+year 	year of observation
+
+plot_id 	ID of a particular plot
+
+species_id 	2-letter code
+
+sex 	sex of animal ("M", "F")
+
+hindfoot_length 	length of the hindfoot in mm
+
+weight 	weight of the animal in grams
+
+genus 	genus of animal
+
+species 	species of animal
+
+taxon 	e.g. Rodent, Reptile, Bird, Rabbit
+
+plot_type 	type of plot
+
+
+#dplyr functions:
+
+    select(): subset columns
+    filter(): subset rows on conditions
+    mutate(): create new columns by using information from other columns
+    group_by() and summarize(): create summary statisitcs on grouped data
+    arrange(): sort results
+    count(): count discrete values
+
+#tidyr functions:
+    spread(): opposite of gathering.You use it when an observation is scattered across multiple rows.
+    gather(): collects a set of column names and places them into a single "key" column.
+    
+
+#Retrieve Data File for Dataset 1.
+
+```{r}
+dataset0 <- read.csv(file="https://raw.githubusercontent.com/AjayArora35/Data-607-Project-2/master/combined.csv", header=TRUE)
+head(dataset0)
+
+```
+#Data Clean -- Get rid of NAs and any blank data
+```{r}
+dataset1 <- dataset0 %>% filter(!is.na(hindfoot_length)) %>% filter(!is.na(sex)) %>% filter(!is.na(weight)) %>% filter(!(sex == '')) 
+
+```
+#Analysis of various aspects of animal data
+##What is the total number of data elements for each sex? 
+```{r}
+res1 <- dataset1 %>%  count(sex)
+#For debugging res1
+ggplot(res1,
+       aes(x=res1$n,
+           y=res1$sex, fill = res1$sex
+           ))+
+    geom_bar(stat="identity", position="dodge")
+```
+##What is the Alphabetical order of all species? 
+```{r}
+dataset1 %>%  count(sex, species) %>%  arrange(species, desc(n)) %>%  head(10) %>% kable() %>%  kable_styling()
+```
+##What is the min, mean and max for all species?
+```{r}
+dataset1 %>% group_by(species_id) %>%
+    summarize(
+        mean_hindfoot_length = mean(hindfoot_length),
+        min_hindfoot_length = min(hindfoot_length),
+        max_hindfoot_length = max(hindfoot_length),
+        n = n()
+    ) %>%  head(10) %>% kable() %>%  kable_styling()
+```
+##What is the heaviest animal per year?
+```{r}
+dataset1 %>%    group_by(year) %>%    filter(weight == max(weight)) %>%    select(year, genus, species, weight) %>%    arrange(year)  %>%  head(10) %>% kable() %>%  kable_styling()
+```
+
+##What is the animal weight in killograms and pounds?
+```{r}
+dataset1 %>% mutate(weight_kg = weight / 1000, weight_lb = weight_kg * 2.2) %>%  head(10) %>% kable() %>%  kable_styling()
+
+```
+
+##What is the average weight by sex and species id?
+```{r}
+res2 <- dataset1 %>% group_by(sex, species_id) %>%  summarize(mean_weight = mean(weight, na.rm = TRUE))
+
+ggplot(res2,
+       aes(x=res2$species_id,
+           y=res2$mean_weight, fill = res2$sex
+           ))+
+    geom_bar(stat="identity", position="dodge")
+```
+
+##What is the sorted list of data by mean_weight in descending order?
+```{r}
+dataset1 %>%  group_by(sex, species_id) %>%  summarize(mean_weight = mean(weight), min_weight = min(weight)) %>%  arrange(desc(mean_weight))   %>%  head(10) %>% kable() %>%  kable_styling()
+```
+
+##What is mean_weight by genus? 
+```{r}
+dataset1_01 <- dataset1 %>% group_by(genus, plot_id) %>% summarize(mean_weight = mean(weight)) 
+dataset1_01 %>%  head(10) %>% kable() %>%  kable_styling()
+
+```
+##What is the mean_weight by plot_id and genus?
+```{r}
+dataset1_01_spread <- dataset1_01 %>%  spread(key = genus, value = mean_weight, fill=0)
+dataset1_01_spread %>%  head(10) %>% kable() %>%  kable_styling()
+
+```
+
+##What is mean_weight by plot_id?
+
+```{r}
+dataset1_02_gather <- dataset1_01_spread %>% gather(key = genus, value = mean_weight, -plot_id) 
+dataset1_02_gather %>% head(10) %>% kable() %>%  kable_styling()
+```
+#Dataset 2 -- Steel 
+Reference: https://www.census.gov
+            
+           https://www.census.gov/foreign-trade/Press-Release/2018pr/03/steel/steel2bf.xls
+           
+#Retrieve Data File for Dataset 2.
+
+```{r}
+#https://stackoverflow.com/questions/39110755/skip-specific-rows-using-read-csv-in-r
+dataset2 <- read.csv(file="https://raw.githubusercontent.com/AjayArora35/Data-607-Project-2/master/steel2bf (2).csv", header=FALSE, stringsAsFactors = FALSE, skip=15)
+head(dataset2,50)
+
+```           
+#Data Clean
+
+##Get the first 47 observations X 13 variables
+```{r}
+#https://stats.idre.ucla.edu/r/modules/subsetting-data/
+dataset2 <- dataset2[1:47,1:13]
+
+head(dataset2,100)
+```
+##Get rid of (-) present in the data; replace with NA
+```{r}
+dataset2[dataset2 =='(-)'] <- NA
+dataset2
+```
+##Give names to columns
+```{r}
+names(dataset2) <- c('Countries','032018_quantity','032018_value','022018_quantity','022018_value',
+                              '032017_quantity','032017_value', '022017_quantity','022017_value',
+                              '03122018_quantity','03122018_value', '03122017_quantity','03122017_value')
+head(dataset2)
+```
+
+##Get rid of all the commas in the numeric values and convert to numeric data type
+```{r}
+dataset2$`032018_quantity` <- as.numeric(gsub(",","",dataset2$`032018_quantity`))
+dataset2$`032018_value` <- as.numeric(gsub(",","",dataset2$`032018_value`))
+dataset2$`022018_quantity` <- as.numeric(gsub(",","",dataset2$`022018_quantity`))
+dataset2
+```
