@@ -22,11 +22,7 @@ library(kableExtra)
 
 ## R Markdown
 
-## First dataset summary:
-
-Summary of the Survey Data
-
-We are studying the species repartition and weight of animals caught in plots in our study area. The dataset is stored as a comma separated value (CSV) file. Each row holds information for a single animal, and the columns represent:  
+## Animal Species Data:
 
 The data was downloaded from the following site: https://ndownloader.figshare.com/files/2292169
 
@@ -37,34 +33,6 @@ References: https://r4ds.had.co.nz/tidy-data.html
             https://datacarpentry.org
             
             https://uoftcoders.github.io/rcourse/lec04-dplyr.html            
-
-Column 	Description
-
-record_id 	Unique id for the observation
-
-month 	month of observation
-
-day 	day of observation
-
-year 	year of observation
-
-plot_id 	ID of a particular plot
-
-species_id 	2-letter code
-
-sex 	sex of animal ("M", "F")
-
-hindfoot_length 	length of the hindfoot in mm
-
-weight 	weight of the animal in grams
-
-genus 	genus of animal
-
-species 	species of animal
-
-taxon 	e.g. Rodent, Reptile, Bird, Rabbit
-
-plot_type 	type of plot
 
 
 #dplyr functions:
@@ -80,6 +48,10 @@ plot_type 	type of plot
     spread(): opposite of gathering.You use it when an observation is scattered across multiple rows.
     gather(): collects a set of column names and places them into a single "key" column.
     
+turn columns into rows (gather()),
+turn rows into columns (spread()),
+turn a character column into multiple columns (separate()),
+turn multiple character columns into a single column (unite())    
 
 #Retrieve Data File for Dataset 1.
 
@@ -106,7 +78,7 @@ ggplot(res1,
 ```
 ##What is the Alphabetical order of all species? 
 ```{r}
-dataset1 %>%  count(sex, species) %>%  arrange(species, desc(n)) %>%  head(10) %>% kable() %>%  kable_styling()
+dataset1 %>%  count(sex, species) %>%  arrange(species, desc(n)) %>%  head(5) %>% kable() %>%  kable_styling()
 ```
 ##What is the min, mean and max for all species?
 ```{r}
@@ -116,16 +88,16 @@ dataset1 %>% group_by(species_id) %>%
         min_hindfoot_length = min(hindfoot_length),
         max_hindfoot_length = max(hindfoot_length),
         n = n()
-    ) %>%  head(10) %>% kable() %>%  kable_styling()
+    ) %>%  head(5) %>% kable() %>%  kable_styling()
 ```
 ##What is the heaviest animal per year?
 ```{r}
-dataset1 %>%    group_by(year) %>%    filter(weight == max(weight)) %>%    select(year, genus, species, weight) %>%    arrange(year)  %>%  head(10) %>% kable() %>%  kable_styling()
+dataset1 %>%    group_by(year) %>%    filter(weight == max(weight)) %>%    select(year, genus, species, weight) %>%    arrange(year)  %>%  head(5) %>% kable() %>%  kable_styling()
 ```
 
 ##What is the animal weight in killograms and pounds?
 ```{r}
-dataset1 %>% mutate(weight_kg = weight / 1000, weight_lb = weight_kg * 2.2) %>%  head(10) %>% kable() %>%  kable_styling()
+dataset1 %>% mutate(weight_kg = weight / 1000, weight_lb = weight_kg * 2.2) %>%  head(5) %>% kable() %>%  kable_styling()
 
 ```
 
@@ -142,19 +114,19 @@ ggplot(res2,
 
 ##What is the sorted list of data by mean_weight in descending order?
 ```{r}
-dataset1 %>%  group_by(sex, species_id) %>%  summarize(mean_weight = mean(weight), min_weight = min(weight)) %>%  arrange(desc(mean_weight))   %>%  head(10) %>% kable() %>%  kable_styling()
+dataset1 %>%  group_by(sex, species_id) %>%  summarize(mean_weight = mean(weight), min_weight = min(weight)) %>%  arrange(desc(mean_weight))   %>%  head(5) %>% kable() %>%  kable_styling()
 ```
 
 ##What is mean_weight by genus? 
 ```{r}
 dataset1_01 <- dataset1 %>% group_by(genus, plot_id) %>% summarize(mean_weight = mean(weight)) 
-dataset1_01 %>%  head(10) %>% kable() %>%  kable_styling()
+dataset1_01 %>%  head(5) %>% kable() %>%  kable_styling()
 
 ```
 ##What is the mean_weight by plot_id and genus?
 ```{r}
 dataset1_01_spread <- dataset1_01 %>%  spread(key = genus, value = mean_weight, fill=0)
-dataset1_01_spread %>%  head(10) %>% kable() %>%  kable_styling()
+dataset1_01_spread %>%  head(5) %>% kable() %>%  kable_styling()
 
 ```
 
@@ -162,9 +134,9 @@ dataset1_01_spread %>%  head(10) %>% kable() %>%  kable_styling()
 
 ```{r}
 dataset1_02_gather <- dataset1_01_spread %>% gather(key = genus, value = mean_weight, -plot_id) 
-dataset1_02_gather %>% head(10) %>% kable() %>%  kable_styling()
+dataset1_02_gather %>% head(5) %>% kable() %>%  kable_styling()
 ```
-#Dataset 2 -- Steel 
+#Dataset 2 -- Steel Imports Data
 Reference: https://www.census.gov
             
            https://www.census.gov/foreign-trade/Press-Release/2018pr/03/steel/steel2bf.xls
@@ -174,7 +146,7 @@ Reference: https://www.census.gov
 ```{r}
 #https://stackoverflow.com/questions/39110755/skip-specific-rows-using-read-csv-in-r
 dataset2 <- read.csv(file="https://raw.githubusercontent.com/AjayArora35/Data-607-Project-2/master/steel2bf (2).csv", header=FALSE, stringsAsFactors = FALSE, skip=15)
-head(dataset2,50)
+head(dataset2,5)%>% kable() %>%  kable_styling()
 
 ```           
 #Data Clean
@@ -184,19 +156,19 @@ head(dataset2,50)
 #https://stats.idre.ucla.edu/r/modules/subsetting-data/
 dataset2 <- dataset2[1:47,1:13]
 
-head(dataset2,100)
+head(dataset2,5)%>% kable() %>%  kable_styling()
 ```
 ##Get rid of (-) present in the data; replace with NA
 ```{r}
 dataset2[dataset2 =='(-)'] <- NA
-dataset2
+head(dataset2,5)%>% kable() %>%  kable_styling()
 ```
 ##Give names to columns
 ```{r}
 names(dataset2) <- c('Countries','032018_quantity','032018_value','022018_quantity','022018_value',
-                              '032017_quantity','032017_value', '022017_quantity','022017_value',
-                              '03122018_quantity','03122018_value', '03122017_quantity','03122017_value')
-head(dataset2)
+                                 '032017_quantity','032017_value', '022017_quantity','022017_value',
+                                 '03122018_quantity','03122018_value', '03122017_quantity','03122017_value')
+head(dataset2,5)%>% kable() %>%  kable_styling()
 ```
 
 ##Get rid of all the commas in the numeric values and convert to numeric data type
@@ -204,5 +176,161 @@ head(dataset2)
 dataset2$`032018_quantity` <- as.numeric(gsub(",","",dataset2$`032018_quantity`))
 dataset2$`032018_value` <- as.numeric(gsub(",","",dataset2$`032018_value`))
 dataset2$`022018_quantity` <- as.numeric(gsub(",","",dataset2$`022018_quantity`))
-dataset2
+dataset2$`022018_value` <- as.numeric(gsub(",","",dataset2$`022018_value`))
+dataset2$`032017_quantity` <- as.numeric(gsub(",","",dataset2$`032017_quantity`))
+dataset2$`032017_value` <- as.numeric(gsub(",","",dataset2$`032017_value`))
+dataset2$`022017_quantity` <- as.numeric(gsub(",","",dataset2$`022017_quantity`))
+dataset2$`022017_value` <- as.numeric(gsub(",","",dataset2$`022017_value`))
+dataset2$`03122018_quantity` <- as.numeric(gsub(",","",dataset2$`03122018_quantity`))
+dataset2$`03122018_value` <- as.numeric(gsub(",","",dataset2$`03122018_value`))
+dataset2$`03122017_quantity` <- as.numeric(gsub(",","",dataset2$`03122017_quantity`))
+dataset2$`03122017_value` <- as.numeric(gsub(",","",dataset2$`03122017_value`))
+
+#head(dataset2)
+
+#https://stackoverflow.com/questions/45576805/how-to-replace-all-na-in-a-dataframe-using-tidyrreplace-na
+tempList <- setNames(lapply(vector("list", ncol(dataset2)), function(x) x <- 0), names(dataset2))
+
+# Now use that list in tidyr::replace_na 
+dataset2 <- dataset2 %>% replace_na(tempList)
+head(dataset2, 5)%>% kable() %>%  kable_styling()
+```
+#Data Analysis
+```{r}
+dataset2_final = gather(dataset2,month_year_type, Number,2:13, factor_key = TRUE) %>% separate(month_year_type, c('month_year','quant_value'),sep='_') %>%
+                spread(month_year,'Number', convert=TRUE)
+head(dataset2_final, 5)%>% kable() %>%  kable_styling()
+
+dataset2_final$`032018` <- as.numeric(gsub(",","",dataset2_final$`032018`))
+dataset2_final$`022017` <- as.numeric(gsub(",","",dataset2_final$`022017`))
+dataset2_final$`022018` <- as.numeric(gsub(",","",dataset2_final$`022018`))
+dataset2_final$`03122017` <- as.numeric(gsub(",","",dataset2_final$`03122017`))
+dataset2_final$`03122018` <- as.numeric(gsub(",","",dataset2_final$`03122018`))
+dataset2_final$`032017` <- as.numeric(gsub(",","",dataset2_final$`032017`))
+
+final_quantity <- dataset2_final %>% filter(quant_value =='quantity') %>% rowwise() %>% mutate(totalquantity = sum(`032018`,`03122018`,`032017`, `03122017`, na.rm=TRUE)) %>% arrange(desc(totalquantity))
+
+head(final_quantity, 5)%>% kable() %>%  kable_styling()
+```
+
+#What is the distribution of Countries and Quantities?
+```{r}
+ggplot(final_quantity,
+       aes(x=final_quantity$totalquantity,
+           y=final_quantity$Countries, fill = final_quantity$totalquantity
+           ))+
+  geom_point()
+
+```
+
+#What is the distribution of Countries and Values?
+```{r}
+final_value <- dataset2_final %>% filter(quant_value =='value') %>% rowwise() %>% mutate(totalvalue = sum(`032018`,`03122018`,`032017`, `03122017`, na.rm=TRUE)) %>% arrange(desc(totalvalue))
+
+head(final_value, 5)%>% kable() %>%  kable_styling()
+
+ggplot(final_value,
+       aes(x=final_value$totalvalue,
+           y=final_value$Countries, fill = final_value$totalvalue
+           ))+
+  geom_point()
+```
+
+#What is the distribution ratio of Countries?
+```{r}
+final_ratio <- final_quantity$totalquantity/final_value$totalvalue
+#For debugging final_ratio
+
+ggplot(final_value,
+       aes(x=final_ratio,
+           y=final_value$Countries
+           ))+
+  geom_point()
+
+```
+
+#Dataset 3 -- GapMinder Wide Dataset
+
+Reference: https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/GJQNEQ
+
+#Retrieve Data File for Dataset 3.
+
+```{r}
+dataset3 <- read.csv(file="https://raw.githubusercontent.com/AjayArora35/Data-607-Project-2/master/gapminder_wide (1).csv", header=TRUE, stringsAsFactors = FALSE)
+head(dataset3,5) 
+
+```   
+#Data Analysis
+
+```{r}
+dataset3_long <- dataset3 %>% 
+  gather(key   = obstype_year,
+         value = values,
+         -continent, -country) %>%
+  separate(obstype_year,
+           into = c('type','year'),
+           sep = "_",
+           convert = TRUE) #this ensures that the year column is an integer rather than a character
+
+head(dataset3_long,5)
+```
+
+#What is distribution of GDP per/cap per country?
+
+```{r}
+ggplot(dataset3_long,
+       aes(x=dataset3_long$values,
+           y=dataset3_long$country
+           ))+
+  geom_point()
+
+```
+
+#What is the distribution of GDP per/year per continent?
+```{r}
+bycontinents <- dataset3_long %>% group_by(continent, year) %>% summarize(bycontinents_mean = mean(values)) 
+head(bycontinents, 5)
+
+ggplot(bycontinents,
+       aes(x=bycontinents$year,
+           y=bycontinents$bycontinents_mean, fill = bycontinents$continent
+           ))+
+    geom_bar(stat="identity", position="dodge")
+```
+
+#What is the distribution of Life Expectancy per year/per continent?
+```{r}
+bylifeexp <- dataset3_long %>%   filter(type == "lifeExp") %>%   group_by(continent, year) %>% summarize(bylifeexp_mean = mean(values)) 
+
+
+head(bylifeexp,5)
+```
+#What is distribution of GDP per/cap per country?
+
+```{r}
+ggplot(bylifeexp,
+       aes(x=bylifeexp$year,
+           y=bylifeexp$bylifeexp_mean, fill = bylifeexp$continent
+           ))+
+  geom_bar(stat="identity", position="dodge")
+
+```
+
+#What is the distribution of Population per year/per continent?
+
+```{r}
+bypop <- dataset3_long %>%   filter(type == "pop") %>%   group_by(continent, year) %>% summarize(bypop_mean = mean(values)) 
+
+
+head(bypop,5)
+```
+#What is distribution of GDP per/cap per country?
+
+```{r}
+ggplot(bypop,
+       aes(x=bypop$year,
+           y=bypop$bypop_mean, fill = bypop$continent
+           ))+
+  geom_bar(stat="identity", position="dodge")
+
 ```
